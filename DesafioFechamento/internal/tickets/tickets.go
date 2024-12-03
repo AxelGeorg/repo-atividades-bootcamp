@@ -136,53 +136,78 @@ func GetTotalTickets(destination string) int {
 	return countTickets
 }
 
-const (
-	inicioManhaMin = 0
-	inicioManhaMax = 6
-	manhaMin       = 7
-	manhaMax       = 12
-	tardeMin       = 13
-	tardeMax       = 19
-	noiteMin       = 20
-	noiteMax       = 23
-)
-
-func MontaPeriodoTicket(time string) (int, int, error) {
+func MontaPeriodoTicket(time string) (int, error) {
 	parts := strings.Split(time, ":")
 	if len(parts) != 2 {
-		return 0, 0, errors.New(fmt.Sprint("Linha com formato inválido:", time))
+		return 0, errors.New(fmt.Sprint("Linha com formato inválido:", time))
 	}
 
 	horaStr := strings.TrimSpace(parts[0])
-	minStr := strings.TrimSpace(parts[1])
 
 	hora, err := strconv.Atoi(horaStr)
 	if err != nil {
-		return 0, 0, errors.New(fmt.Sprint("Erro ao converter hora:", err))
+		return 0, errors.New(fmt.Sprint("Erro ao converter hora:", err))
 	}
 
-	min, err := strconv.Atoi(minStr)
-	if err != nil {
-		return 0, 0, errors.New(fmt.Sprint("Erro ao converter min:", err))
-	}
-
-	return hora, min, nil
+	return hora, nil
 }
 
+func GetCountTicketsPeriodo(horaMin, horaMax int) (int, error) {
+
+	var countTickets int
+
+	for _, ticket := range listTickets {
+		hora, err := MontaPeriodoTicket(ticket.horario)
+		if err != nil {
+			return 0, err
+		}
+
+		if hora >= horaMin && hora < horaMax {
+			countTickets++
+		}
+	}
+
+	return countTickets, nil
+}
+
+const (
+	inicioManhaComeca = 0
+	manhaComeca       = 7
+	tardeComeca       = 13
+	noiteComeca       = 20
+	noiteAcaba        = 25
+)
+
 func GetCountByPeriod(time string) (int, error) {
-	hora, min, err := MontaPeriodoTicket(time)
+	hora, err := MontaPeriodoTicket(time)
 	if err != nil {
 		return 0, err
 	}
 
 	switch {
-		case 
+	case hora >= inicioManhaComeca && hora < manhaComeca:
+		return GetCountTicketsPeriodo(inicioManhaComeca, manhaComeca)
+	case hora >= manhaComeca && hora < tardeComeca:
+		return GetCountTicketsPeriodo(manhaComeca, tardeComeca)
+	case hora >= tardeComeca && hora < noiteComeca:
+		return GetCountTicketsPeriodo(tardeComeca, noiteComeca)
+	case hora >= noiteComeca && hora < noiteAcaba:
+		return GetCountTicketsPeriodo(noiteComeca, noiteAcaba)
 	}
 
-	return 0, errors.New("teste")
+	return 0, errors.New("O Periodo nao é valido!")
 }
 
-// ejemplo 3
-func AverageDestination(destination string, total int) (int, error) {
-	return 0, errors.New("teste")
+func AverageDestination(destination string) (float64, error) {
+
+	var listPais []Ticket
+	for _, itemTicket := range listTickets {
+		if itemTicket.paisDestino == destination {
+			listPais = append(listPais, itemTicket)
+		}
+	}
+
+	percentage := (float64(len(listPais)) / float64(len(listTickets))) * 100
+
+	return percentage, nil
 }
