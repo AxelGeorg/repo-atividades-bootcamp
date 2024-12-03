@@ -7,45 +7,155 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func FillTicketList() {
+	if tickets.GetCountTicketList() == 0 {
+		tickets.FillTicketList()
+	}
+}
+
 func TestGetTotalTickets(t *testing.T) {
-	tickets.PreencherListTickets()
 
-	t.Run("Quantidade certa de tickets", func(t *testing.T) {
-		total := tickets.GetTotalTickets("Brazil")
-		expected := 45
-		require.Equal(t, total, expected)
-	})
-	t.Run("Quantidade errada de tickets", func(t *testing.T) {
-		total := tickets.GetTotalTickets("Brazil")
-		expected := 44
-		require.NotEqual(t, total, expected)
-	})
+	FillTicketList()
 
-	t.Run("Quantidade certa do periodo", func(t *testing.T) {
-		countHorario, err := tickets.GetCountByPeriod("21:30")
-		expected := 151
-		require.Nil(t, err)
-		require.Equal(t, countHorario, expected)
-	})
+	testCases := []struct {
+		ScenarioName  string
+		Data          string
+		ExpectedData  int
+		ExpectedError error
+	}{
+		{
+			ScenarioName:  "Count when 'China'",
+			Data:          "China",
+			ExpectedData:  178,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when 'Brazil'",
+			Data:          "Brazil",
+			ExpectedData:  45,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when 'France'",
+			Data:          "France",
+			ExpectedData:  37,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when Unknown",
+			Data:          "Unknown",
+			ExpectedData:  0,
+			ExpectedError: nil,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.ScenarioName, func(t *testing.T) {
+			output := tickets.GetTotalTickets(testCase.Data)
+			require.Equal(t, testCase.ExpectedData, output)
+		})
+	}
+}
 
-	t.Run("Quantidade errada do periodo", func(t *testing.T) {
-		countHorario, err := tickets.GetCountByPeriod("14:30")
-		expected := 190
-		require.Nil(t, err)
-		require.NotEqual(t, countHorario, expected)
-	})
+func TestGetCountByPeriod(t *testing.T) {
+	FillTicketList()
 
-	t.Run("Media certa do brazil", func(t *testing.T) {
-		porcentagem, err := tickets.AverageDestination("Brazil")
-		expected := 4.5
-		require.Nil(t, err)
-		require.Equal(t, porcentagem, expected)
-	})
+	testCases := []struct {
+		ScenarioName  string
+		Data          string
+		ExpectedData  int
+		ExpectedError error
+	}{
+		{
+			ScenarioName:  "Count when noite",
+			Data:          "21:30",
+			ExpectedData:  151,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when tarde",
+			Data:          "14:30",
+			ExpectedData:  289,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when manha",
+			Data:          "11:15",
+			ExpectedData:  256,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when inicio manha",
+			Data:          "4:25",
+			ExpectedData:  304,
+			ExpectedError: nil,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.ScenarioName, func(t *testing.T) {
+			output, err := tickets.GetCountByPeriod(testCase.Data)
+			require.Nil(t, err)
+			require.Equal(t, testCase.ExpectedData, output)
+		})
+	}
+	t.Run("Count when all", func(t *testing.T) {
 
-	t.Run("Media errada do brazil", func(t *testing.T) {
-		porcentagem, err := tickets.AverageDestination("Brazil")
-		expected := 7.2
-		require.Nil(t, err)
-		require.NotEqual(t, porcentagem, expected)
+		sumInicioManha, errInicioManha := tickets.GetCountByPeriod("3:30")
+		sumManha, errManha := tickets.GetCountByPeriod("10:17")
+		sumTarde, errTarde := tickets.GetCountByPeriod("17:18")
+		sumNoite, errNoite := tickets.GetCountByPeriod("21:09")
+
+		require.Nil(t, errInicioManha, errManha, errTarde, errNoite)
+
+		sum := sumInicioManha + sumManha + sumTarde + sumNoite
+		require.Equal(t, sum, 1000)
 	})
+}
+
+func TestAverageDestination(t *testing.T) {
+	FillTicketList()
+
+	testCases := []struct {
+		ScenarioName  string
+		Data          string
+		ExpectedData  float64
+		ExpectedError error
+	}{
+		{
+			ScenarioName:  "Count when 'Mongolia'",
+			Data:          "Mongolia",
+			ExpectedData:  0.3,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when 'Brazil'",
+			Data:          "Brazil",
+			ExpectedData:  4.5,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when 'Poland'",
+			Data:          "Poland",
+			ExpectedData:  3.4000000000000004,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when 'Japan'",
+			Data:          "Japan",
+			ExpectedData:  1.4000000000000001,
+			ExpectedError: nil,
+		},
+		{
+			ScenarioName:  "Count when Unknown",
+			Data:          "Unknown",
+			ExpectedData:  float64(0),
+			ExpectedError: nil,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.ScenarioName, func(t *testing.T) {
+			output, err := tickets.AverageDestination(testCase.Data)
+			require.Nil(t, err)
+			require.Equal(t, testCase.ExpectedData, output)
+		})
+	}
 }

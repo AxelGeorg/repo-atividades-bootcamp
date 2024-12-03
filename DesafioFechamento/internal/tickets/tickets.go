@@ -9,93 +9,108 @@ import (
 	"strings"
 )
 
-type ErrorLinhaFormatoInvalido struct {
+const (
+	PartsPeriod = 2
+	PartsTicket = 6
+
+	morningStart     = 0
+	morningStartTime = 7
+	afternoonStart   = 13
+	eveningStart     = 20
+	eveningEnd       = 25
+)
+
+type ErrorInvalidLineFormat struct {
 	message string
 }
 
-func (e ErrorLinhaFormatoInvalido) Error() string {
+func (e ErrorInvalidLineFormat) Error() string {
 	return e.message
 }
 
-type ErrorTicketJaExisteLista struct {
+type ErrorTicketAlreadyExistsInList struct {
 	message string
 }
 
-func (e ErrorTicketJaExisteLista) Error() string {
+func (e ErrorTicketAlreadyExistsInList) Error() string {
 	return e.message
 }
 
 type Ticket struct {
 	id          int
-	nome        string
+	name        string
 	email       string
-	paisDestino string
-	horario     string
-	preco       float32
+	destination string
+	time        string
+	price       float32
 }
 
-var listTickets []Ticket
+var ticketList []Ticket
 
-func MontaTicket(linha string) (*Ticket, error) {
-	parts := strings.Split(linha, ",")
-	if len(parts) != 6 {
-		var errorFormato ErrorLinhaFormatoInvalido
-		errorFormato.message = fmt.Sprintf("Erro: Linha com formato inválido: %s ", linha)
+func BuildTicket(line string) (*Ticket, error) {
+	parts := strings.Split(line, ",")
+	if len(parts) != PartsTicket {
+		var formatError ErrorInvalidLineFormat
+		formatError.message = fmt.Sprintf("Error: Invalid line format: %s ", line)
 
-		return nil, errorFormato
+		return nil, formatError
 	}
 
 	idStr := strings.TrimSpace(parts[0])
-	nomeTicket := strings.TrimSpace(parts[1])
+	nameTicket := strings.TrimSpace(parts[1])
 	emailTicket := strings.TrimSpace(parts[2])
-	paisTicket := strings.TrimSpace(parts[3])
-	horarioTicket := strings.TrimSpace(parts[4])
-	precoStr := strings.TrimSpace(parts[5])
+	destinationTicket := strings.TrimSpace(parts[3])
+	timeTicket := strings.TrimSpace(parts[4])
+	priceStr := strings.TrimSpace(parts[5])
 
 	idTicket, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorConvert := errors.New("Erro ao converter id:" + err.Error())
-		return nil, errorConvert
+		convertError := errors.New("Error converting id:" + err.Error())
+		return nil, convertError
 	}
 
-	precoTicket, err := strconv.ParseFloat(precoStr, 32)
+	priceTicket, err := strconv.ParseFloat(priceStr, 32)
 	if err != nil {
-		errorConvert := errors.New("Erro ao converter preco: " + err.Error())
-		return nil, errorConvert
+		convertError := errors.New("Error converting price: " + err.Error())
+		return nil, convertError
 	}
 
 	ticket := Ticket{
 		id:          idTicket,
-		nome:        nomeTicket,
+		name:        nameTicket,
 		email:       emailTicket,
-		paisDestino: paisTicket,
-		horario:     horarioTicket,
-		preco:       float32(precoTicket),
+		destination: destinationTicket,
+		time:        timeTicket,
+		price:       float32(priceTicket),
 	}
 
 	return &ticket, nil
 }
 
-func AdicionaTicket(ticket Ticket) (bool, error) {
-	for _, itemTicket := range listTickets {
+func AddTicket(ticket Ticket) (bool, error) {
+	for _, itemTicket := range ticketList {
 		if itemTicket.id == ticket.id {
-			var errorJaExiste ErrorLinhaFormatoInvalido
-			errorJaExiste.message = fmt.Sprintf("Erro: Ticket already exists - id: %d ", itemTicket.id)
+			var errorAlreadyExists ErrorInvalidLineFormat
+			errorAlreadyExists.message = fmt.Sprintf("Error: Ticket already exists - id: %d ", itemTicket.id)
 
-			return false, errorJaExiste
+			return false, errorAlreadyExists
 		}
 	}
 
-	if ticket.id == 0 || ticket.nome == "" || ticket.email == "" || ticket.paisDestino == "" || ticket.horario == "" || ticket.preco == 0.0 {
-		return false, errors.New("Ticket com informacao zerada - nome:" + ticket.nome)
+	if ticket.id == 0 || ticket.name == "" || ticket.email == "" || ticket.destination == "" || ticket.time == "" || ticket.price == 0.0 {
+		return false, errors.New("Ticket with empty information - name:" + ticket.name)
 	}
 
-	listTickets = append(listTickets, ticket)
+	ticketList = append(ticketList, ticket)
 
 	return true, nil
 }
 
-func PreencherListTickets() {
+func GetCountTicketList() int {
+	return len(ticketList)
+}
+
+func FillTicketList() {
 	file, err := os.Open("tickets.csv")
 	if err != nil {
 		panic("The indicated file was not found or is damaged")
@@ -105,13 +120,13 @@ func PreencherListTickets() {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		ticket, err := MontaTicket(scanner.Text())
+		ticket, err := BuildTicket(scanner.Text())
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
 
-		_, errAdd := AdicionaTicket(*ticket)
+		_, errAdd := AddTicket(*ticket)
 		if errAdd != nil {
 			fmt.Println(errAdd.Error())
 			continue
@@ -120,11 +135,10 @@ func PreencherListTickets() {
 }
 
 func GetTotalTickets(destination string) int {
-
 	var countTickets int
 
-	for _, ticket := range listTickets {
-		if ticket.paisDestino == destination {
+	for _, ticket := range ticketList {
+		if ticket.destination == destination {
 			countTickets++
 		}
 	}
@@ -132,33 +146,32 @@ func GetTotalTickets(destination string) int {
 	return countTickets
 }
 
-func MontaPeriodoTicket(time string) (int, error) {
+func BuildPeriodTicket(time string) (int, error) {
 	parts := strings.Split(time, ":")
-	if len(parts) != 2 {
-		return 0, errors.New(fmt.Sprint("Linha com formato inválido:", time))
+	if len(parts) != PartsPeriod {
+		return 0, errors.New(fmt.Sprint("Line with invalid format:", time))
 	}
 
-	horaStr := strings.TrimSpace(parts[0])
+	hourStr := strings.TrimSpace(parts[0])
 
-	hora, err := strconv.Atoi(horaStr)
+	hour, err := strconv.Atoi(hourStr)
 	if err != nil {
-		return 0, errors.New(fmt.Sprint("Erro ao converter hora:", err))
+		return 0, errors.New(fmt.Sprint("Error converting hour:", err))
 	}
 
-	return hora, nil
+	return hour, nil
 }
 
-func GetCountTicketsPeriodo(horaMin, horaMax int) (int, error) {
-
+func GetCountTicketsPeriod(hourMin, hourMax int) (int, error) {
 	var countTickets int
 
-	for _, ticket := range listTickets {
-		hora, err := MontaPeriodoTicket(ticket.horario)
+	for _, ticket := range ticketList {
+		hour, err := BuildPeriodTicket(ticket.time)
 		if err != nil {
 			return 0, err
 		}
 
-		if hora >= horaMin && hora < horaMax {
+		if hour >= hourMin && hour < hourMax {
 			countTickets++
 		}
 	}
@@ -166,44 +179,35 @@ func GetCountTicketsPeriodo(horaMin, horaMax int) (int, error) {
 	return countTickets, nil
 }
 
-const (
-	inicioManhaComeca = 0
-	manhaComeca       = 7
-	tardeComeca       = 13
-	noiteComeca       = 20
-	noiteAcaba        = 25
-)
-
 func GetCountByPeriod(time string) (int, error) {
-	hora, err := MontaPeriodoTicket(time)
+	hour, err := BuildPeriodTicket(time)
 	if err != nil {
 		return 0, err
 	}
 
 	switch {
-	case hora >= inicioManhaComeca && hora < manhaComeca:
-		return GetCountTicketsPeriodo(inicioManhaComeca, manhaComeca)
-	case hora >= manhaComeca && hora < tardeComeca:
-		return GetCountTicketsPeriodo(manhaComeca, tardeComeca)
-	case hora >= tardeComeca && hora < noiteComeca:
-		return GetCountTicketsPeriodo(tardeComeca, noiteComeca)
-	case hora >= noiteComeca && hora < noiteAcaba:
-		return GetCountTicketsPeriodo(noiteComeca, noiteAcaba)
+	case hour >= morningStart && hour < morningStartTime:
+		return GetCountTicketsPeriod(morningStart, morningStartTime)
+	case hour >= morningStartTime && hour < afternoonStart:
+		return GetCountTicketsPeriod(morningStartTime, afternoonStart)
+	case hour >= afternoonStart && hour < eveningStart:
+		return GetCountTicketsPeriod(afternoonStart, eveningStart)
+	case hour >= eveningStart && hour < eveningEnd:
+		return GetCountTicketsPeriod(eveningStart, eveningEnd)
 	}
 
-	return 0, errors.New("O Periodo nao é valido!")
+	return 0, errors.New("The period is not valid!")
 }
 
 func AverageDestination(destination string) (float64, error) {
-
-	var listPais []Ticket
-	for _, itemTicket := range listTickets {
-		if itemTicket.paisDestino == destination {
-			listPais = append(listPais, itemTicket)
+	var countryList []Ticket
+	for _, itemTicket := range ticketList {
+		if itemTicket.destination == destination {
+			countryList = append(countryList, itemTicket)
 		}
 	}
 
-	percentage := (float64(len(listPais)) / float64(len(listTickets))) * 100
+	percentage := (float64(len(countryList)) / float64(len(ticketList))) * 100
 
 	return percentage, nil
 }

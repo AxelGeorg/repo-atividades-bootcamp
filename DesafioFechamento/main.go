@@ -7,25 +7,25 @@ import (
 )
 
 func main() {
-	tickets.PreencherListTickets()
+	tickets.FillTicketList()
 
-	pais := "Brazil"
-	total := tickets.GetTotalTickets(pais)
-	fmt.Println("\nQuantas pessoas viajam para o", pais, "é", total)
+	country := "Brazil"
+	total := tickets.GetTotalTickets(country)
+	fmt.Println("\nHow many people are traveling to", country, "is", total)
 
-	periodo := "21:30"
-	countHorario, err := tickets.GetCountByPeriod(periodo)
+	period := "21:30"
+	countPeriod, err := tickets.GetCountByPeriod(period)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println("Quantas pessoas viajam no Periodo das", periodo, "é", countHorario)
+		fmt.Println("How many people are traveling in the period of", period, "is", countPeriod)
 	}
 
-	paisAvarage := "Brazil"
-	porcentagem, errAvarage := tickets.AverageDestination(paisAvarage)
-	if errAvarage != nil {
+	countryAverage := "Brazil"
+	percentage, errAverage := tickets.AverageDestination(countryAverage)
+	if errAverage != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println("Porcentagem de pessoas que viajam para o", paisAvarage, "é", porcentagem, "%")
+		fmt.Println("Percentage of people traveling to", countryAverage, "is", percentage, "%")
 	}
 }
