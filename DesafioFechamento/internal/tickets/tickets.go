@@ -36,17 +36,6 @@ type Ticket struct {
 
 var listTickets []Ticket
 
-func init() {
-	file, err := os.Open("tickets.csv")
-	if err != nil {
-		panic("The indicated file was not found or is damaged")
-	}
-
-	defer file.Close()
-
-	PreencherListTickets(file)
-}
-
 func MontaTicket(linha string) (*Ticket, error) {
 	parts := strings.Split(linha, ",")
 	if len(parts) != 6 {
@@ -65,13 +54,13 @@ func MontaTicket(linha string) (*Ticket, error) {
 
 	idTicket, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorConvert := errors.New(fmt.Sprintf("Erro ao converter id:", err))
+		errorConvert := errors.New("Erro ao converter id:" + err.Error())
 		return nil, errorConvert
 	}
 
 	precoTicket, err := strconv.ParseFloat(precoStr, 32)
 	if err != nil {
-		errorConvert := errors.New(fmt.Sprintf("Erro ao converter preco:", err))
+		errorConvert := errors.New("Erro ao converter preco: " + err.Error())
 		return nil, errorConvert
 	}
 
@@ -98,7 +87,7 @@ func AdicionaTicket(ticket Ticket) (bool, error) {
 	}
 
 	if ticket.id == 0 || ticket.nome == "" || ticket.email == "" || ticket.paisDestino == "" || ticket.horario == "" || ticket.preco == 0.0 {
-		return false, errors.New(fmt.Sprintf("Ticket com informacao zerada: ", ticket))
+		return false, errors.New("Ticket com informacao zerada - nome:" + ticket.nome)
 	}
 
 	listTickets = append(listTickets, ticket)
@@ -106,7 +95,14 @@ func AdicionaTicket(ticket Ticket) (bool, error) {
 	return true, nil
 }
 
-func PreencherListTickets(file *os.File) {
+func PreencherListTickets() {
+	file, err := os.Open("tickets.csv")
+	if err != nil {
+		panic("The indicated file was not found or is damaged")
+	}
+
+	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		ticket, err := MontaTicket(scanner.Text())

@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	tickets.PreencherListTickets()
+
 	pais := "Brazil"
 	total := tickets.GetTotalTickets(pais)
 	fmt.Println("\nQuantas pessoas viajam para o", pais, "é", total)
