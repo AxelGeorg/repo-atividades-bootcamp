@@ -1,0 +1,5 @@
+Axel,1,12345678911,Rua paulo schwar
+Felipe,2,11222691092,Rua hermann lange
+Axel,2,12345678911,Rua paulo schwaree //ignorado
+Axel,0,12345678911,Rua paulo schwaree //ignorado
+Cantoni,4,12344454545,Rua jose
