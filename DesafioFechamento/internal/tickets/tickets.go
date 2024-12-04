@@ -12,13 +12,35 @@ import (
 const (
 	PartsPeriod = 2
 	PartsTicket = 6
+)
 
+const (
 	morningStart     = 0
 	morningStartTime = 7
 	afternoonStart   = 13
 	eveningStart     = 20
 	eveningEnd       = 25
 )
+
+const (
+	fieldID = iota
+	fieldName
+	fieldEmail
+	fieldDestination
+	fieldTime
+	fieldPrice
+)
+
+type Ticket struct {
+	id          int
+	name        string
+	email       string
+	destination string
+	time        string
+	price       float32
+}
+
+var ticketList []Ticket
 
 type ErrorInvalidLineFormat struct {
 	message string
@@ -36,43 +58,36 @@ func (e ErrorTicketAlreadyExistsInList) Error() string {
 	return e.message
 }
 
-type Ticket struct {
-	id          int
-	name        string
-	email       string
-	destination string
-	time        string
-	price       float32
+func init() {
+	FillTicketList()
 }
 
-var ticketList []Ticket
-
-func BuildTicket(line string) (*Ticket, error) {
+func BuildTicket(line string) (Ticket, error) {
 	parts := strings.Split(line, ",")
 	if len(parts) != PartsTicket {
 		var formatError ErrorInvalidLineFormat
 		formatError.message = fmt.Sprintf("Error: Invalid line format: %s ", line)
 
-		return nil, formatError
+		return Ticket{}, formatError
 	}
 
-	idStr := strings.TrimSpace(parts[0])
-	nameTicket := strings.TrimSpace(parts[1])
-	emailTicket := strings.TrimSpace(parts[2])
-	destinationTicket := strings.TrimSpace(parts[3])
-	timeTicket := strings.TrimSpace(parts[4])
-	priceStr := strings.TrimSpace(parts[5])
+	idStr := strings.TrimSpace(parts[fieldID])
+	nameTicket := strings.TrimSpace(parts[fieldName])
+	emailTicket := strings.TrimSpace(parts[fieldEmail])
+	destinationTicket := strings.TrimSpace(parts[fieldDestination])
+	timeTicket := strings.TrimSpace(parts[fieldTime])
+	priceStr := strings.TrimSpace(parts[fieldPrice])
 
 	idTicket, err := strconv.Atoi(idStr)
 	if err != nil {
 		convertError := errors.New("Error converting id:" + err.Error())
-		return nil, convertError
+		return Ticket{}, convertError
 	}
 
 	priceTicket, err := strconv.ParseFloat(priceStr, 32)
 	if err != nil {
 		convertError := errors.New("Error converting price: " + err.Error())
-		return nil, convertError
+		return Ticket{}, convertError
 	}
 
 	ticket := Ticket{
@@ -84,26 +99,34 @@ func BuildTicket(line string) (*Ticket, error) {
 		price:       float32(priceTicket),
 	}
 
-	return &ticket, nil
+	return ticket, nil
 }
 
-func AddTicket(ticket Ticket) (bool, error) {
+func validateTicket(ticket Ticket) error {
+	if ticket.id == 0 || ticket.name == "" || ticket.email == "" || ticket.destination == "" || ticket.time == "" || ticket.price == 0.0 {
+		return errors.New("Ticket with empty information - name:" + ticket.name)
+	}
+
+	return nil
+}
+
+func AddTicket(ticket Ticket) error {
 	for _, itemTicket := range ticketList {
 		if itemTicket.id == ticket.id {
 			var errorAlreadyExists ErrorInvalidLineFormat
 			errorAlreadyExists.message = fmt.Sprintf("Error: Ticket already exists - id: %d ", itemTicket.id)
 
-			return false, errorAlreadyExists
+			return errorAlreadyExists
 		}
 	}
 
-	if ticket.id == 0 || ticket.name == "" || ticket.email == "" || ticket.destination == "" || ticket.time == "" || ticket.price == 0.0 {
-		return false, errors.New("Ticket with empty information - name:" + ticket.name)
+	err := validateTicket(ticket)
+	if err != nil {
+		return err
 	}
 
 	ticketList = append(ticketList, ticket)
-
-	return true, nil
+	return nil
 }
 
 func GetCountTicketList() int {
@@ -126,7 +149,7 @@ func FillTicketList() {
 			continue
 		}
 
-		_, errAdd := AddTicket(*ticket)
+		errAdd := AddTicket(ticket)
 		if errAdd != nil {
 			fmt.Println(errAdd.Error())
 			continue
@@ -200,14 +223,13 @@ func GetCountByPeriod(time string) (int, error) {
 }
 
 func AverageDestination(destination string) (float64, error) {
-	var countryList []Ticket
+	var countCountry int
 	for _, itemTicket := range ticketList {
 		if itemTicket.destination == destination {
-			countryList = append(countryList, itemTicket)
+			countCountry++
 		}
 	}
 
-	percentage := (float64(len(countryList)) / float64(len(ticketList))) * 100
-
+	percentage := (float64(countCountry) / float64(len(ticketList))) * 100
 	return percentage, nil
 }

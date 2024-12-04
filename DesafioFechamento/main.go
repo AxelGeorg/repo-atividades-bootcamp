@@ -7,8 +7,6 @@ import (
 )
 
 func main() {
-	tickets.FillTicketList()
-
 	country := "Brazil"
 	total := tickets.GetTotalTickets(country)
 	fmt.Println("\nHow many people are traveling to", country, "is", total)

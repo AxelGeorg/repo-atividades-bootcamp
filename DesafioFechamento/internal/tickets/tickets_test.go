@@ -7,16 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FillTicketList() {
-	if tickets.GetCountTicketList() == 0 {
-		tickets.FillTicketList()
-	}
-}
-
 func TestGetTotalTickets(t *testing.T) {
-
-	FillTicketList()
-
 	testCases := []struct {
 		ScenarioName  string
 		Data          string
@@ -57,8 +48,6 @@ func TestGetTotalTickets(t *testing.T) {
 }
 
 func TestGetCountByPeriod(t *testing.T) {
-	FillTicketList()
-
 	testCases := []struct {
 		ScenarioName  string
 		Data          string
@@ -112,8 +101,6 @@ func TestGetCountByPeriod(t *testing.T) {
 }
 
 func TestAverageDestination(t *testing.T) {
-	FillTicketList()
-
 	testCases := []struct {
 		ScenarioName  string
 		Data          string
