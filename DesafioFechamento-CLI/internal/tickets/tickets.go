@@ -110,6 +110,10 @@ func GetTicketList() []Ticket {
 	return ticketList
 }
 
+func (t *Ticket) SetFillTicketList() []Ticket {
+	return FillTicketList()
+}
+
 func FillTicketList() []Ticket {
 	file, err := os.Open("tickets.csv")
 	if err != nil {

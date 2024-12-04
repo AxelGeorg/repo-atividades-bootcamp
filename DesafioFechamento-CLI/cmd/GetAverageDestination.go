@@ -15,7 +15,7 @@ var percentageByDestination = &cobra.Command{
 			fmt.Printf("Number of 'all' destination occurence: %.2f\n", count*100)
 		} else {
 			count, _ := Service.AverageDestination(args[0])
-			fmt.Printf("Number of '%s' destination occurence: %.2f\n", args[0], count*100)
+			fmt.Printf("Number of '%s' destination occurence: %.1f %\n", args[0], count)
 		}
 	},
 }
